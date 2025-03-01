@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Creator for GDev</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Monster Creator</h1>
+        <p>Create your own monster by mixing and matching different body parts!</p>
+
+        <div id="canvas-container">
+            <canvas id="monsterCanvas" width="400" height="400"></canvas>
+        </div>
+
+        <div class="controls">
+            <div class="part-selector">
+                <h3>Head</h3>
+                <button id="prevHead">←</button>
+                <span id="headIndex">1</span>
+                <button id="nextHead">→</button>
+            </div>
+
+            <div class="part-selector">
+                <h3>Torso</h3>
+                <button id="prevTorso">←</button>
+                <span id="torsoIndex">1</span>
+                <button id="nextTorso">→</button>
+            </div>
+
+            <div class="part-selector">
+                <h3>Legs</h3>
+                <button id="prevLegs">←</button>
+                <span id="legsIndex">1</span>
+                <button id="nextLegs">→</button>
+            </div>
+        </div>
+
+        <button id="randomize" class="randomize-btn">Randomize Monster!</button>
+        <button id="download" class="download-btn">Download Monster</button>
+
+        <div class="footer">
+            <p>Created for GDev Workshop - Have fun making games with your monsters!</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
