@@ -1234,14 +1234,18 @@
                     const idleDataUrl = trimmedIdleCanvas.toDataURL('image/png');
                     monsterDir.file("monster_idle.png", idleDataUrl.split(',')[1], { base64: true });
 
-                    const runCanvas = document.createElement('canvas');
-                    runCanvas.width = 400;
-                    runCanvas.height = 400;
-                    const runCtx = runCanvas.getContext('2d');
-                    drawMonster(runCtx, 'run');
-                    const trimmedRunCanvas = trimCanvas(runCanvas);
-                    const runDataUrl = trimmedRunCanvas.toDataURL('image/png');
-                    monsterDir.file(`monster_run_${i}.png`, runDataUrl.split(',')[1], { base64: true });
+
+                    for (let i = 0; i < 4; i++) {
+                        animationFrame = i;
+                        const runCanvas = document.createElement('canvas');
+                        runCanvas.width = 400;
+                        runCanvas.height = 400;
+                        const runCtx = runCanvas.getContext('2d');
+                        drawMonster(runCtx, 'run');
+                        const trimmedRunCanvas = trimCanvas(runCanvas);
+                        const runDataUrl = trimmedRunCanvas.toDataURL('image/png');
+                        monsterDir.file(`monster_run_${i}.png`, runDataUrl.split(',')[1], { base64: true });
+                    }
 
                     const jumpCanvas = document.createElement('canvas');
                     jumpCanvas.width = 400;
