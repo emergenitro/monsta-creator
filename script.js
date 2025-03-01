@@ -1,32 +1,99 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const canvas = document.getElementById('monsterCanvas');
-    const ctx = canvas.getContext('2d');
+
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+
+            tab.classList.add('active');
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+
+    const monsterCanvas = document.getElementById('monsterCanvas');
+    const monsterCtx = monsterCanvas.getContext('2d');
+
+
+    const idlePreview = document.getElementById('idlePreview');
+    const idleCtx = idlePreview.getContext('2d');
+
+    const runPreview = document.getElementById('runPreview');
+    const runCtx = runPreview.getContext('2d');
+
+    const jumpPreview = document.getElementById('jumpPreview');
+    const jumpCtx = jumpPreview.getContext('2d');
+
+
+    const monsterExportPreview = document.getElementById('monsterExportPreview');
+    const monsterExportCtx = monsterExportPreview.getContext('2d');
+
+
+    const platformCanvas = document.getElementById('platformCanvas');
+    const platformCtx = platformCanvas.getContext('2d');
+
+
+    const platformExportPreview = document.getElementById('platformExportPreview');
+    const platformExportCtx = platformExportPreview.getContext('2d');
+
+
+    const colorSchemes = [
+        { name: "Bright", colors: ['#FF6B6B', '#4ECDC4', '#FFD166', '#6A5ACD', '#50D890', '#FF9A76'] },
+        { name: "Pastel", colors: ['#A8D8EA', '#AA96DA', '#FCBAD3', '#FFFFD2', '#C5FAD5', '#F4F9F9'] },
+        { name: "Dark", colors: ['#2C3E50', '#E74C3C', '#3498DB', '#F1C40F', '#1ABC9C', '#9B59B6'] },
+        { name: "Earthy", colors: ['#D9B08C', '#FFCB9A', '#D5C7BC', '#116466', '#2C3A47', '#7A9E7E'] },
+        { name: "Vibrant", colors: ['#FC5185', '#3FC1C9', '#F5F5F5', '#364F6B', '#F0134D', '#40BFC1'] }
+    ];
+
+    let currentColorScheme = 0;
+
+
     const heads = [];
     const torsos = [];
     const legs = [];
+
+
     let currentHead = 0;
     let currentTorso = 0;
     let currentLegs = 0;
+
+
     const numHeads = 6;
     const numTorsos = 6;
     const numLegs = 6;
 
-    const colors = [
-        '#FF6B6B',
-        '#4ECDC4',
-        '#FFD166',
-        '#6A5ACD',
-        '#50D890',
-        '#FF9A76'
-    ];
+
+    const platformTypes = ['normal', 'bounce', 'crumble', 'moving'];
+    let currentPlatform = 'normal';
+    let currentPlatformColor = 0;
+
+
+    let animationFrame = 0;
+    const runAnimationFrames = 4;
+    let animationTimer;
+
 
     function generateMonsterParts() {
+
+        heads.length = 0;
+        torsos.length = 0;
+        legs.length = 0;
+
+
         for (let i = 0; i < numHeads; i++) {
             heads.push({
-                color: colors[i % colors.length],
-                draw: function (ctx) {
-                    ctx.fillStyle = this.color;
+                draw: function (ctx, state = 'idle') {
+                    const colorScheme = colorSchemes[currentColorScheme].colors;
+                    ctx.fillStyle = colorScheme[i % colorScheme.length];
                     ctx.beginPath();
+
+
                     switch (i % 6) {
                         case 0:
                             ctx.arc(200, 120, 70, 0, Math.PI * 2);
@@ -71,99 +138,150 @@ document.addEventListener('DOMContentLoaded', function () {
                     ctx.arc(230, 110, 15, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.fillStyle = 'black';
-                    ctx.beginPath();
-                    ctx.arc(170 + ((i % 3) - 1) * 5, 110, 7, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(230 + ((i % 3) - 1) * 5, 110, 7, 0, Math.PI * 2);
-                    ctx.fill();
-                    if (i % 2 === 0) {
+
+                    if (state === 'idle') {
+
                         ctx.beginPath();
-                        ctx.arc(200, 140, 30, 0.1 * Math.PI, 0.9 * Math.PI);
+                        ctx.arc(170 + ((i % 3) - 1) * 5, 110, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(230 + ((i % 3) - 1) * 5, 110, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (state === 'run') {
+
+                        const bounceOffset = Math.sin(animationFrame * 0.5) * 3;
+                        ctx.beginPath();
+                        ctx.arc(170 + ((i % 3) - 1) * 5, 110 + bounceOffset, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(230 + ((i % 3) - 1) * 5, 110 + bounceOffset, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (state === 'jump') {
+
+                        ctx.beginPath();
+                        ctx.arc(170 + ((i % 3) - 1) * 5, 108, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(230 + ((i % 3) - 1) * 5, 108, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+
+                    if (state === 'idle') {
+                        if (i % 2 === 0) {
+
+                            ctx.beginPath();
+                            ctx.arc(200, 140, 30, 0.1 * Math.PI, 0.9 * Math.PI);
+                            ctx.lineWidth = 3;
+                            ctx.stroke();
+                        } else {
+
+                            ctx.beginPath();
+                            ctx.arc(200, 150, 15, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillStyle = colorScheme[i % colorScheme.length];
+                            ctx.beginPath();
+                            ctx.arc(200, 150, 8, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    } else if (state === 'run') {
+
+                        ctx.beginPath();
+                        ctx.arc(200, 150, 15 + Math.sin(animationFrame * 0.5) * 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (state === 'jump') {
+
+                        ctx.beginPath();
+                        ctx.arc(200, 145, 35, 0, Math.PI);
                         ctx.lineWidth = 3;
                         ctx.stroke();
-                    } else {
-                        ctx.beginPath();
-                        ctx.arc(200, 150, 15, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.fillStyle = this.color;
-                        ctx.beginPath();
-                        ctx.arc(200, 150, 8, 0, Math.PI * 2);
-                        ctx.fill();
                     }
                 }
             });
         }
         for (let i = 0; i < numTorsos; i++) {
             torsos.push({
-                color: colors[(i + 2) % colors.length],
-                draw: function (ctx) {
-                    ctx.fillStyle = this.color;
+                draw: function (ctx, state = 'idle') {
+                    const colorScheme = colorSchemes[currentColorScheme].colors;
+                    ctx.fillStyle = colorScheme[(i + 2) % colorScheme.length];
+
+
+                    let offsetY = 0;
+                    if (state === 'run') {
+                        offsetY = Math.sin(animationFrame * 0.5) * 5;
+                    } else if (state === 'jump') {
+                        offsetY = -10;
+                    }
+
+
                     switch (i % 6) {
                         case 0:
-                            ctx.fillRect(150, 180, 100, 110);
+                            ctx.fillRect(150, 180 + offsetY, 100, 110);
                             break;
                         case 1:
                             ctx.beginPath();
-                            ctx.ellipse(200, 230, 60, 70, 0, 0, Math.PI * 2);
+                            ctx.ellipse(200, 230 + offsetY, 60, 70, 0, 0, Math.PI * 2);
                             ctx.fill();
                             break;
                         case 2:
                             ctx.beginPath();
-                            ctx.moveTo(140, 180);
-                            ctx.lineTo(260, 180);
-                            ctx.lineTo(240, 290);
-                            ctx.lineTo(160, 290);
+                            ctx.moveTo(140, 180 + offsetY);
+                            ctx.lineTo(260, 180 + offsetY);
+                            ctx.lineTo(240, 290 + offsetY);
+                            ctx.lineTo(160, 290 + offsetY);
                             ctx.closePath();
                             ctx.fill();
                             break;
                         case 3:
                             ctx.beginPath();
-                            ctx.moveTo(150, 180);
-                            ctx.lineTo(250, 180);
-                            ctx.lineTo(220, 230);
-                            ctx.lineTo(250, 290);
-                            ctx.lineTo(150, 290);
-                            ctx.lineTo(180, 230);
+                            ctx.moveTo(150, 180 + offsetY);
+                            ctx.lineTo(250, 180 + offsetY);
+                            ctx.lineTo(220, 230 + offsetY);
+                            ctx.lineTo(250, 290 + offsetY);
+                            ctx.lineTo(150, 290 + offsetY);
+                            ctx.lineTo(180, 230 + offsetY);
                             ctx.closePath();
                             ctx.fill();
                             break;
                         case 4:
                             ctx.beginPath();
-                            ctx.ellipse(200, 230, 50, 60, 0, 0, Math.PI * 2);
+                            ctx.ellipse(200, 230 + offsetY, 50, 60, 0, 0, Math.PI * 2);
                             ctx.fill();
                             break;
                         case 5:
                             ctx.beginPath();
-                            ctx.moveTo(200, 180);
-                            ctx.lineTo(250, 200);
-                            ctx.lineTo(230, 290);
-                            ctx.lineTo(170, 290);
-                            ctx.lineTo(150, 200);
+                            ctx.moveTo(200, 180 + offsetY);
+                            ctx.lineTo(250, 200 + offsetY);
+                            ctx.lineTo(230, 290 + offsetY);
+                            ctx.lineTo(170, 290 + offsetY);
+                            ctx.lineTo(150, 200 + offsetY);
                             ctx.closePath();
                             ctx.fill();
                             break;
                     }
+
+
                     if (i % 3 === 0) {
+
                         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
                         ctx.lineWidth = 8;
                         for (let j = 0; j < 3; j++) {
                             ctx.beginPath();
-                            ctx.moveTo(160, 200 + j * 30);
-                            ctx.lineTo(240, 200 + j * 30);
+                            ctx.moveTo(160, 200 + j * 30 + offsetY);
+                            ctx.lineTo(240, 200 + j * 30 + offsetY);
                             ctx.stroke();
                         }
                     } else if (i % 3 === 1) {
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
                         for (let j = 0; j < 5; j++) {
                             ctx.beginPath();
-                            ctx.arc(170 + j * 15, 210 + (j % 3) * 20, 8, 0, Math.PI * 2);
+                            ctx.arc(170 + j * 15, 210 + (j % 3) * 20 + offsetY, 8, 0, Math.PI * 2);
                             ctx.fill();
                         }
                     } else {
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                         ctx.beginPath();
-                        ctx.arc(200, 230, 15, 0, Math.PI * 2);
+                        ctx.arc(200, 230 + offsetY, 15, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
                         ctx.lineWidth = 2;
@@ -173,39 +291,58 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+
         for (let i = 0; i < numLegs; i++) {
             legs.push({
-                color: colors[(i + 4) % colors.length],
-                draw: function (ctx) {
-                    ctx.fillStyle = this.color;
+                draw: function (ctx, state = 'idle') {
+                    const colorScheme = colorSchemes[currentColorScheme].colors;
+                    ctx.fillStyle = colorScheme[(i + 4) % colorScheme.length];
+
+
+                    let leftLegOffset = 0;
+                    let rightLegOffset = 0;
+
+                    if (state === 'run') {
+
+                        leftLegOffset = Math.sin(animationFrame * 0.5) * 15;
+                        rightLegOffset = Math.sin(animationFrame * 0.5 + Math.PI) * 15;
+                    } else if (state === 'jump') {
+
+                        leftLegOffset = -15;
+                        rightLegOffset = -15;
+                    }
+
+
                     switch (i % 6) {
                         case 0:
-                            ctx.fillRect(160, 290, 25, 80);
-                            ctx.fillRect(215, 290, 25, 80);
+                            ctx.fillRect(160, 290 + leftLegOffset, 25, 80);
+                            ctx.fillRect(215, 290 + rightLegOffset, 25, 80);
                             break;
                         case 1:
-                            ctx.fillRect(150, 290, 15, 90);
+                            ctx.fillRect(150, 290 + leftLegOffset, 15, 90);
                             ctx.fillRect(190, 290, 15, 90);
-                            ctx.fillRect(230, 290, 15, 90);
+                            ctx.fillRect(230, 290 + rightLegOffset, 15, 90);
                             break;
                         case 2:
                             ctx.beginPath();
-                            ctx.roundRect(160, 290, 25, 80, 10);
+                            ctx.roundRect(160, 290 + leftLegOffset, 25, 80, 10);
                             ctx.fill();
                             ctx.beginPath();
-                            ctx.roundRect(215, 290, 25, 80, 10);
+                            ctx.roundRect(215, 290 + rightLegOffset, 25, 80, 10);
                             ctx.fill();
                             break;
                         case 3:
                             for (let j = 0; j < 4; j++) {
+                                const tentacleOffset = j % 2 === 0 ? leftLegOffset : rightLegOffset;
                                 ctx.beginPath();
                                 ctx.moveTo(160 + j * 25, 290);
+
                                 for (let k = 0; k < 8; k++) {
                                     ctx.quadraticCurveTo(
                                         150 + j * 25 + (k % 2) * 20,
-                                        310 + k * 10,
+                                        310 + k * 10 + tentacleOffset * (k / 8),
                                         160 + j * 25,
-                                        330 + k * 10
+                                        330 + k * 10 + tentacleOffset * (k / 8)
                                     );
                                 }
                                 ctx.lineTo(160 + j * 25, 290);
@@ -214,44 +351,49 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                             break;
                         case 4:
+                            const legBottom = state === 'jump' ? 350 : 370;
                             ctx.beginPath();
                             ctx.moveTo(150, 290);
                             ctx.lineTo(250, 290);
-                            ctx.lineTo(270, 370);
-                            ctx.lineTo(130, 370);
+                            ctx.lineTo(270, legBottom);
+                            ctx.lineTo(130, legBottom);
                             ctx.closePath();
                             ctx.fill();
                             break;
                         case 5:
                             ctx.beginPath();
                             ctx.moveTo(170, 290);
-                            ctx.quadraticCurveTo(120, 330, 150, 370);
-                            ctx.lineTo(170, 370);
+                            ctx.quadraticCurveTo(120, 330 + leftLegOffset, 150, 370 + leftLegOffset);
+                            ctx.lineTo(170, 370 + leftLegOffset);
                             ctx.lineTo(170, 290);
                             ctx.fill();
 
                             ctx.beginPath();
                             ctx.moveTo(230, 290);
-                            ctx.quadraticCurveTo(280, 330, 250, 370);
-                            ctx.lineTo(230, 370);
+                            ctx.quadraticCurveTo(280, 330 + rightLegOffset, 250, 370 + rightLegOffset);
+                            ctx.lineTo(230, 370 + rightLegOffset);
                             ctx.lineTo(230, 290);
                             ctx.fill();
                             break;
                     }
 
+
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
 
+
                     if (i % 6 === 0 || i % 6 === 2) {
+
                         ctx.beginPath();
-                        ctx.ellipse(172, 370, 20, 10, 0, 0, Math.PI * 2);
+                        ctx.ellipse(172, 370 + leftLegOffset, 20, 10, 0, 0, Math.PI * 2);
                         ctx.fill();
 
                         ctx.beginPath();
-                        ctx.ellipse(227, 370, 20, 10, 0, 0, Math.PI * 2);
+                        ctx.ellipse(227, 370 + rightLegOffset, 20, 10, 0, 0, Math.PI * 2);
                         ctx.fill();
                     } else if (i % 6 === 1) {
+
                         ctx.beginPath();
-                        ctx.ellipse(157, 380, 15, 8, 0, 0, Math.PI * 2);
+                        ctx.ellipse(157, 380 + leftLegOffset, 15, 8, 0, 0, Math.PI * 2);
                         ctx.fill();
 
                         ctx.beginPath();
@@ -259,11 +401,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         ctx.fill();
 
                         ctx.beginPath();
-                        ctx.ellipse(237, 380, 15, 8, 0, 0, Math.PI * 2);
+                        ctx.ellipse(237, 380 + rightLegOffset, 15, 8, 0, 0, Math.PI * 2);
                         ctx.fill();
                     } else if (i % 6 === 4) {
+
+                        const footY = state === 'jump' ? 350 : 370;
                         ctx.beginPath();
-                        ctx.ellipse(200, 370, 60, 10, 0, 0, Math.PI);
+                        ctx.ellipse(200, footY, 60, 10, 0, 0, Math.PI);
                         ctx.fill();
                     }
                 }
@@ -271,63 +415,475 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    generateMonsterParts();
 
-    function drawMonster() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        legs[currentLegs].draw(ctx);
-        torsos[currentTorso].draw(ctx);
-        heads[currentHead].draw(ctx);
-        document.getElementById('headIndex').textContent = (currentHead + 1) + '/' + numHeads;
-        document.getElementById('torsoIndex').textContent = (currentTorso + 1) + '/' + numTorsos;
-        document.getElementById('legsIndex').textContent = (currentLegs + 1) + '/' + numLegs;
+    function drawMonster(ctx, state = 'idle', scale = 1, offsetX = 0, offsetY = 0) {
+
+        ctx.save();
+
+
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+
+        if (scale !== 1 || offsetX !== 0 || offsetY !== 0) {
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+        }
+
+
+        legs[currentLegs].draw(ctx, state);
+        torsos[currentTorso].draw(ctx, state);
+        heads[currentHead].draw(ctx, state);
+
+
+        ctx.restore();
+
+
+        if (ctx === monsterCtx) {
+            document.getElementById('headIndex').textContent = (currentHead + 1) + '/' + numHeads;
+            document.getElementById('torsoIndex').textContent = (currentTorso + 1) + '/' + numTorsos;
+            document.getElementById('legsIndex').textContent = (currentLegs + 1) + '/' + numLegs;
+        }
     }
-    randomizeMonster();
-    document.getElementById('prevHead').addEventListener('click', function () {
-        currentHead = (currentHead - 1 + numHeads) % numHeads;
-        drawMonster();
-    });
 
-    document.getElementById('nextHead').addEventListener('click', function () {
-        currentHead = (currentHead + 1) % numHeads;
-        drawMonster();
-    });
 
-    document.getElementById('prevTorso').addEventListener('click', function () {
-        currentTorso = (currentTorso - 1 + numTorsos) % numTorsos;
-        drawMonster();
-    });
+    function drawPlatform(ctx, type = 'normal', color = 0, scale = 1, offsetX = 0, offsetY = 0) {
+        ctx.save();
 
-    document.getElementById('nextTorso').addEventListener('click', function () {
-        currentTorso = (currentTorso + 1) % numTorsos;
-        drawMonster();
-    });
 
-    document.getElementById('prevLegs').addEventListener('click', function () {
-        currentLegs = (currentLegs - 1 + numLegs) % numLegs;
-        drawMonster();
-    });
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    document.getElementById('nextLegs').addEventListener('click', function () {
-        currentLegs = (currentLegs + 1) % numLegs;
-        drawMonster();
-    });
 
-    // Randomize monster
+        if (scale !== 1 || offsetX !== 0 || offsetY !== 0) {
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+        }
+
+        const colorScheme = colorSchemes[currentColorScheme].colors;
+        const platformColor = colorScheme[color % colorScheme.length];
+
+
+        const width = platformCanvas.width * 0.8;
+        const height = 30;
+        const x = (platformCanvas.width - width) / 2;
+        const y = (platformCanvas.height - height) / 2;
+
+
+        ctx.fillStyle = platformColor;
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, 10);
+        ctx.fill();
+
+
+        switch (type) {
+            case 'normal':
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                for (let i = 0; i < width; i += 30) {
+                    ctx.fillRect(x + i, y + 5, 20, 2);
+                }
+                break;
+            case 'bounce':
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 3; i++) {
+                    const springX = x + width * (i + 1) / 4;
+                    ctx.beginPath();
+                    ctx.moveTo(springX, y);
+                    ctx.lineTo(springX, y - 15);
+                    ctx.stroke();
+
+
+                    ctx.beginPath();
+                    for (let j = 0; j < 5; j++) {
+                        ctx.arc(springX + (j % 2 ? 5 : -5), y - 15 - j * 3, 5, 0, Math.PI);
+                    }
+                    ctx.stroke();
+                }
+                break;
+            case 'crumble':
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + width * 0.3, y);
+                ctx.lineTo(x + width * 0.3, y + height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(x + width * 0.6, y);
+                ctx.lineTo(x + width * 0.7, y + height);
+                ctx.stroke();
+
+
+                ctx.fillStyle = platformColor;
+                ctx.beginPath();
+                ctx.roundRect(x + width * 0.1, y + height + 5, width * 0.15, 10, 5);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.roundRect(x + width * 0.75, y + height + 8, width * 0.1, 8, 5);
+                ctx.fill();
+                break;
+            case 'moving':
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+
+
+                ctx.beginPath();
+                ctx.moveTo(x + 20, y + height / 2);
+                ctx.lineTo(x + 40, y + height * 0.3);
+                ctx.lineTo(x + 40, y + height * 0.7);
+                ctx.closePath();
+                ctx.fill();
+
+
+                ctx.beginPath();
+                ctx.moveTo(x + width - 20, y + height / 2);
+                ctx.lineTo(x + width - 40, y + height * 0.3);
+                ctx.lineTo(x + width - 40, y + height * 0.7);
+                ctx.closePath();
+                ctx.fill();
+                break;
+        }
+
+        ctx.restore();
+    }
+
+
+    function startAnimation() {
+
+        if (animationTimer) {
+            clearInterval(animationTimer);
+        }
+
+        animationTimer = setInterval(() => {
+            animationFrame = (animationFrame + 1) % runAnimationFrames;
+
+
+            drawMonster(runCtx, 'run', 0.25, 0, 0);
+
+
+            if (document.querySelector('.tab.active').getAttribute('data-tab') === 'monster-creator') {
+                drawMonster(monsterCtx);
+            }
+
+        }, 150);
+    }
+
+
+    function updateMonsterPreviews() {
+        drawMonster(idleCtx, 'idle', 0.25, 0, 0);
+        drawMonster(runCtx, 'run', 0.25, 0, 0);
+        drawMonster(jumpCtx, 'jump', 0.25, 0, 0);
+        drawMonster(monsterExportCtx, 'idle', 0.25, 0, 0);
+    }
+
+
+    function updatePlatformPreviews() {
+
+        const container = document.querySelector('.platform-preview-grid');
+        container.innerHTML = '';
+
+
+        platformTypes.forEach(type => {
+            const previewBox = document.createElement('div');
+            previewBox.className = 'preview-box';
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 60;
+            previewBox.appendChild(canvas);
+
+            const label = document.createElement('p');
+            label.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            previewBox.appendChild(label);
+
+            container.appendChild(previewBox);
+
+            const ctx = canvas.getContext('2d');
+            drawPlatform(ctx, type, currentPlatformColor, 0.33, 0, 0);
+        });
+
+
+        drawPlatform(platformExportCtx, currentPlatform, currentPlatformColor, 0.33, 0, 0);
+    }
+
+
     function randomizeMonster() {
         currentHead = Math.floor(Math.random() * numHeads);
         currentTorso = Math.floor(Math.random() * numTorsos);
         currentLegs = Math.floor(Math.random() * numLegs);
-        drawMonster();
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
     }
 
-    document.getElementById('randomize').addEventListener('click', randomizeMonster);
 
-    // Download monster as PNG
-    document.getElementById('download').addEventListener('click', function () {
-        const link = document.createElement('a');
-        link.download = 'my-monster.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+    function randomizePlatform() {
+        currentPlatform = platformTypes[Math.floor(Math.random() * platformTypes.length)];
+        currentPlatformColor = Math.floor(Math.random() * colorSchemes[currentColorScheme].colors.length);
+
+
+        document.querySelectorAll('.platform-type').forEach(el => {
+            el.classList.remove('selected');
+            if (el.getAttribute('data-type') === currentPlatform) {
+                el.classList.add('selected');
+            }
+        });
+
+        drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
+        updatePlatformPreviews();
+    }
+
+
+    function populateColorSchemes() {
+        const container = document.getElementById('colorOptions');
+        container.innerHTML = '';
+
+        colorSchemes.forEach((scheme, index) => {
+            const schemeContainer = document.createElement('div');
+            schemeContainer.style.margin = '10px';
+            schemeContainer.style.display = 'inline-block';
+
+            const label = document.createElement('p');
+            label.textContent = scheme.name;
+            label.style.margin = '5px';
+            schemeContainer.appendChild(label);
+
+            const colorsDiv = document.createElement('div');
+
+            scheme.colors.forEach(color => {
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-option';
+                colorBox.style.backgroundColor = color;
+                colorsDiv.appendChild(colorBox);
+            });
+
+            schemeContainer.appendChild(colorsDiv);
+
+
+            const button = document.createElement('button');
+            button.textContent = 'Use Scheme';
+            button.style.margin = '5px';
+            button.addEventListener('click', () => {
+                currentColorScheme = index;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+
+
+                drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
+                updatePlatformPreviews();
+
+
+                document.querySelectorAll('.color-scheme-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                button.classList.add('selected');
+            });
+
+            if (index === currentColorScheme) {
+                button.classList.add('selected');
+                button.classList.add('color-scheme-button');
+            }
+
+            schemeContainer.appendChild(button);
+            container.appendChild(schemeContainer);
+        });
+    }
+
+
+    function populatePlatformColorOptions() {
+        const container = document.getElementById('platformColorOptions');
+        container.innerHTML = '';
+
+        colorSchemes[currentColorScheme].colors.forEach((color, index) => {
+            const colorBox = document.createElement('div');
+            colorBox.className = 'color-option';
+            colorBox.style.backgroundColor = color;
+
+            if (index === currentPlatformColor) {
+                colorBox.classList.add('selected');
+            }
+
+            colorBox.addEventListener('click', () => {
+                currentPlatformColor = index;
+
+
+                document.querySelectorAll('#platformColorOptions .color-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                colorBox.classList.add('selected');
+
+                drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
+                updatePlatformPreviews();
+            });
+
+            container.appendChild(colorBox);
+        });
+    }
+
+
+    function exportAssets() {
+
+        const zip = new JSZip();
+
+
+        const monsterDir = zip.folder("monster");
+        const platformsDir = zip.folder("platforms");
+
+
+
+
+
+        const idleCanvas = document.createElement('canvas');
+        idleCanvas.width = 400;
+        idleCanvas.height = 400;
+        const idleCtx = idleCanvas.getContext('2d');
+        drawMonster(idleCtx, 'idle');
+
+        monsterDir.file("monster_idle.png", idleCanvas.toDataURL().split(',')[1], { base64: true });
+
+
+        for (let frame = 0; frame < runAnimationFrames; frame++) {
+            const runCanvas = document.createElement('canvas');
+            runCanvas.width = 400;
+            runCanvas.height = 400;
+            const runCtx = runCanvas.getContext('2d');
+
+
+            const oldFrame = animationFrame;
+            animationFrame = frame;
+
+            drawMonster(runCtx, 'run');
+
+
+            animationFrame = oldFrame;
+
+            monsterDir.file(`monster_run_${frame}.png`, runCanvas.toDataURL().split(',')[1], { base64: true });
+        }
+
+
+        const jumpCanvas = document.createElement('canvas');
+        jumpCanvas.width = 400;
+        jumpCanvas.height = 400;
+        const jumpCtx = jumpCanvas.getContext('2d');
+        drawMonster(jumpCtx, 'jump');
+
+        monsterDir.file("monster_jump.png", jumpCanvas.toDataURL().split(',')[1], { base64: true });
+
+
+        platformTypes.forEach(type => {
+            const platformCanvas = document.createElement('canvas');
+            platformCanvas.width = 600;
+            platformCanvas.height = 150;
+            const platformCtx = platformCanvas.getContext('2d');
+            drawPlatform(platformCtx, type, currentPlatformColor);
+
+            platformsDir.file(`platform_${type}.png`, platformCanvas.toDataURL().split(',')[1], { base64: true });
+        });
+
+
+        const readme = `# Monster Mashup Asset Pack
+
+Created with the Monster Mashup Asset Generator for GDev Workshop
+
+## Contents:
+- Monster character with animations (idle, run, jump)
+- Platform types (normal, bouncy, crumbling, moving)
+
+## How to use in GDevelop:
+
+1. Import the monster animations:
+- monster_idle.png - Use for standing still
+- monster_run_0.png through monster_run_3.png - Create animation for running
+- monster_jump.png - Use for jumping animation
+
+2. Import platform graphics:
+- platform_normal.png - Standard platform
+- platform_bounce.png - Add behaviors: "Bounce" with strength 800
+- platform_crumble.png - Add behaviors: "Platform" with custom events to disappear
+- platform_moving.png - Add behaviors: "Path movement" between two points
+
+Enjoy making your game!
+`;
+
+
+        zip.file("README.md", readme);
+
+
+        zip.generateAsync({ type: "blob" })
+            .then(function (content) {
+                saveAs(content, "monster-mashup-assets.zip");
+            });
+    }
+
+
+    generateMonsterParts();
+    populateColorSchemes();
+    populatePlatformColorOptions();
+    randomizeMonster();
+    randomizePlatform();
+    startAnimation();
+    updateMonsterPreviews();
+    updatePlatformPreviews();
+
+
+    document.getElementById('prevHead').addEventListener('click', function () {
+        currentHead = (currentHead - 1 + numHeads) % numHeads;
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
     });
+
+    document.getElementById('nextHead').addEventListener('click', function () {
+        currentHead = (currentHead + 1) % numHeads;
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
+    });
+
+    document.getElementById('prevTorso').addEventListener('click', function () {
+        currentTorso = (currentTorso - 1 + numTorsos) % numTorsos;
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
+    });
+
+    document.getElementById('nextTorso').addEventListener('click', function () {
+        currentTorso = (currentTorso + 1) % numTorsos;
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
+    });
+
+    document.getElementById('prevLegs').addEventListener('click', function () {
+        currentLegs = (currentLegs - 1 + numLegs) % numLegs;
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
+    });
+
+    document.getElementById('nextLegs').addEventListener('click', function () {
+        currentLegs = (currentLegs + 1) % numLegs;
+        drawMonster(monsterCtx);
+        updateMonsterPreviews();
+    });
+
+
+    document.querySelectorAll('.platform-type').forEach(el => {
+        el.addEventListener('click', () => {
+            currentPlatform = el.getAttribute('data-type');
+
+
+            document.querySelectorAll('.platform-type').forEach(el => {
+                el.classList.remove('selected');
+            });
+            el.classList.add('selected');
+
+            drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
+            updatePlatformPreviews();
+        });
+    });
+
+
+    document.getElementById('randomizeMonster').addEventListener('click', randomizeMonster);
+    document.getElementById('randomizePlatform').addEventListener('click', randomizePlatform);
+
+
+    document.getElementById('exportAssets').addEventListener('click', exportAssets);
 });

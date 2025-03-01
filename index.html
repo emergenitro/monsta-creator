@@ -10,41 +10,138 @@
 
 <body>
     <div class="container">
-        <h1>Monster Creator</h1>
-        <p>Create your own monster by mixing and matching different body parts!</p>
+        <h1>Monster Mashup</h1>
+        <p>Create custom monsters and platforms for your GDevelop game!</p>
 
-        <div id="canvas-container">
-            <canvas id="monsterCanvas" width="400" height="400"></canvas>
+        <div class="tabs">
+            <div class="tab active" data-tab="monster-creator">Monster Creator</div>
+            <div class="tab" data-tab="platform-creator">Platform Creator</div>
+            <div class="tab" data-tab="export-assets">Export Game Assets</div>
         </div>
 
-        <div class="controls">
-            <div class="part-selector">
-                <h3>Head</h3>
-                <button id="prevHead">←</button>
-                <span id="headIndex">1</span>
-                <button id="nextHead">→</button>
+        <!-- Monster Creator Tab -->
+        <div class="tab-content active" id="monster-creator">
+            <h2>Design Your Monster</h2>
+
+            <div id="canvas-container">
+                <canvas id="monsterCanvas" width="400" height="400"></canvas>
             </div>
 
-            <div class="part-selector">
-                <h3>Torso</h3>
-                <button id="prevTorso">←</button>
-                <span id="torsoIndex">1</span>
-                <button id="nextTorso">→</button>
+            <div class="controls">
+                <div class="part-selector">
+                    <h3>Head</h3>
+                    <button id="prevHead">←</button>
+                    <span id="headIndex">1</span>
+                    <button id="nextHead">→</button>
+                </div>
+
+                <div class="part-selector">
+                    <h3>Torso</h3>
+                    <button id="prevTorso">←</button>
+                    <span id="torsoIndex">1</span>
+                    <button id="nextTorso">→</button>
+                </div>
+
+                <div class="part-selector">
+                    <h3>Legs</h3>
+                    <button id="prevLegs">←</button>
+                    <span id="legsIndex">1</span>
+                    <button id="nextLegs">→</button>
+                </div>
             </div>
 
-            <div class="part-selector">
-                <h3>Legs</h3>
-                <button id="prevLegs">←</button>
-                <span id="legsIndex">1</span>
-                <button id="nextLegs">→</button>
+            <div class="colors-panel">
+                <h3>Color Scheme</h3>
+                <div id="colorOptions"></div>
+            </div>
+
+            <button id="randomizeMonster" class="action-btn">Randomize Monster!</button>
+
+            <h3>Animation Preview</h3>
+            <div class="preview-grid">
+                <div class="preview-box">
+                    <canvas id="idlePreview" width="100" height="100"></canvas>
+                    <p>Idle</p>
+                </div>
+                <div class="preview-box">
+                    <canvas id="runPreview" width="100" height="100"></canvas>
+                    <p>Run</p>
+                </div>
+                <div class="preview-box">
+                    <canvas id="jumpPreview" width="100" height="100"></canvas>
+                    <p>Jump</p>
+                </div>
             </div>
         </div>
 
-        <button id="randomize" class="randomize-btn">Randomize Monster!</button>
-        <button id="download" class="download-btn">Download Monster</button>
+        <!-- Platform Creator Tab -->
+        <div class="tab-content" id="platform-creator">
+            <h2>Design Your Platforms</h2>
+
+            <div id="platform-canvas-container">
+                <canvas id="platformCanvas" width="600" height="150"></canvas>
+            </div>
+
+            <div class="platform-controls">
+                <div class="platform-type" data-type="normal">
+                    <h3>Normal</h3>
+                    <p>Standard platform</p>
+                </div>
+                <div class="platform-type" data-type="bounce">
+                    <h3>Bouncy</h3>
+                    <p>Springs the player upwards</p>
+                </div>
+                <div class="platform-type" data-type="crumble">
+                    <h3>Crumbling</h3>
+                    <p>Falls after being stepped on</p>
+                </div>
+                <div class="platform-type" data-type="moving">
+                    <h3>Moving</h3>
+                    <p>Moves horizontally</p>
+                </div>
+            </div>
+
+            <div class="colors-panel">
+                <h3>Platform Color</h3>
+                <div id="platformColorOptions"></div>
+            </div>
+
+            <button id="randomizePlatform" class="action-btn">Randomize Platform!</button>
+
+            <h3>Platform Previews</h3>
+            <div class="platform-preview-grid">
+                <!-- Platform previews will be added here -->
+            </div>
+        </div>
+
+        <!-- Export Assets Tab -->
+        <div class="tab-content" id="export-assets">
+            <h2>Export Game Assets</h2>
+            <p>Download all your custom assets as a zip file for use in GDevelop</p>
+
+            <div class="preview-grid">
+                <div class="preview-box">
+                    <canvas id="monsterExportPreview" width="100" height="100"></canvas>
+                    <p>Monster</p>
+                </div>
+                <div class="preview-box">
+                    <canvas id="platformExportPreview" width="100" height="50"></canvas>
+                    <p>Platforms</p>
+                </div>
+            </div>
+
+            <p>Your assets package will include:</p>
+            <ul style="text-align:left; max-width:400px; margin:0 auto;">
+                <li>Monster character with 3 animations (idle, run, jump)</li>
+                <li>4 platform types (normal, bouncy, crumbling, moving)</li>
+                <li>README with instructions for importing into GDevelop</li>
+            </ul>
+
+            <button id="exportAssets" class="download-btn">Download Asset Pack</button>
+        </div>
 
         <div class="footer">
-            <p>Created for GDev Workshop - Have fun making games with your monsters!</p>
+            <p>Created for GDevelop Workshop - Have fun making games with your monsters!</p>
         </div>
     </div>
     <script src="script.js"></script>
