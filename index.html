@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monster Mashup - GDev Asset Creator</title>
+    <!-- Make sure libraries load directly without async issues -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
         integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -317,7 +318,7 @@
             <h2>Design Your Platforms</h2>
 
             <div id="platform-canvas-container">
-                <canvas id="platformCanvas" width="600" height="150"></canvas>
+                <canvas id="platformCanvas" width="600" height="60"></canvas>
             </div>
 
             <div class="platform-controls">
@@ -862,8 +863,8 @@
                 const platformColor = colorScheme[color % colorScheme.length];
 
 
-                const width = ctx.canvas.width * 0.8;
-                const height = 30;
+                const width = ctx.canvas.width * 0.95;
+                const height = 40;
                 const x = (ctx.canvas.width - width) / 2;
                 const y = (ctx.canvas.height - height) / 2;
 
@@ -1229,8 +1230,9 @@
                     platformTypes.forEach(type => {
 
                         const platformCanvas = document.createElement('canvas');
+
                         platformCanvas.width = 600;
-                        platformCanvas.height = 150;
+                        platformCanvas.height = 60;
                         const platformCtx = platformCanvas.getContext('2d');
 
 
@@ -1263,6 +1265,12 @@ Created with the Monster Mashup Asset Generator for GDev Workshop
 - platform_bounce.png - Add behaviors: "Bounce" with strength 800
 - platform_crumble.png - Add behaviors: "Platform" with custom events to disappear
 - platform_moving.png - Add behaviors: "Path movement" between two points
+
+3. Platform Physics Setup:
+- Add the Physics 2.0 behavior to platforms
+- Set platforms as "Static" (no gravity)
+- Set collision masks appropriately
+- The platform images have minimal whitespace for better collision detection
 
 ## Basic GDevelop Events to Implement:
 
