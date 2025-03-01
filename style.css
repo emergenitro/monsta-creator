@@ -214,10 +214,16 @@ button:hover {
     background-color: #e6e6fa;
 }
 
-.platform-preview-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
+.color-scheme {
+    display: inline-block;
+    margin: 10px;
+    text-align: center;
+}
+
+.color-scheme button {
+    margin-top: 5px;
+}
+
+.platform-colors {
+    margin: 10px 0;
 }

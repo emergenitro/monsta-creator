@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const monsterCanvas = document.getElementById('monsterCanvas');
     const monsterCtx = monsterCanvas.getContext('2d');
 
-
     const idlePreview = document.getElementById('idlePreview');
     const idleCtx = idlePreview.getContext('2d');
 
@@ -30,14 +29,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const jumpPreview = document.getElementById('jumpPreview');
     const jumpCtx = jumpPreview.getContext('2d');
 
-
     const monsterExportPreview = document.getElementById('monsterExportPreview');
     const monsterExportCtx = monsterExportPreview.getContext('2d');
 
-
     const platformCanvas = document.getElementById('platformCanvas');
     const platformCtx = platformCanvas.getContext('2d');
-
 
     const platformExportPreview = document.getElementById('platformExportPreview');
     const platformExportCtx = platformExportPreview.getContext('2d');
@@ -130,6 +126,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     ctx.fill();
+
+
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
                     ctx.arc(170, 110, 15, 0, Math.PI * 2);
@@ -137,6 +135,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     ctx.beginPath();
                     ctx.arc(230, 110, 15, 0, Math.PI * 2);
                     ctx.fill();
+
+
                     ctx.fillStyle = 'black';
 
                     if (state === 'idle') {
@@ -199,6 +199,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
+
+
         for (let i = 0; i < numTorsos; i++) {
             torsos.push({
                 draw: function (ctx, state = 'idle') {
@@ -272,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             ctx.stroke();
                         }
                     } else if (i % 3 === 1) {
+
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
                         for (let j = 0; j < 5; j++) {
                             ctx.beginPath();
@@ -279,6 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             ctx.fill();
                         }
                     } else {
+
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                         ctx.beginPath();
                         ctx.arc(200, 230 + offsetY, 15, 0, Math.PI * 2);
@@ -417,6 +421,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function drawMonster(ctx, state = 'idle', scale = 1, offsetX = 0, offsetY = 0) {
+        if (!ctx) return;
+
 
         ctx.save();
 
@@ -439,14 +445,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         if (ctx === monsterCtx) {
-            document.getElementById('headIndex').textContent = (currentHead + 1) + '/' + numHeads;
-            document.getElementById('torsoIndex').textContent = (currentTorso + 1) + '/' + numTorsos;
-            document.getElementById('legsIndex').textContent = (currentLegs + 1) + '/' + numLegs;
+            const headIndexEl = document.getElementById('headIndex');
+            const torsoIndexEl = document.getElementById('torsoIndex');
+            const legsIndexEl = document.getElementById('legsIndex');
+
+            if (headIndexEl) headIndexEl.textContent = (currentHead + 1) + '/' + numHeads;
+            if (torsoIndexEl) torsoIndexEl.textContent = (currentTorso + 1) + '/' + numTorsos;
+            if (legsIndexEl) legsIndexEl.textContent = (currentLegs + 1) + '/' + numLegs;
         }
     }
 
 
     function drawPlatform(ctx, type = 'normal', color = 0, scale = 1, offsetX = 0, offsetY = 0) {
+        if (!ctx) return;
+
         ctx.save();
 
 
@@ -462,15 +474,33 @@ document.addEventListener('DOMContentLoaded', function () {
         const platformColor = colorScheme[color % colorScheme.length];
 
 
-        const width = platformCanvas.width * 0.8;
+        const width = ctx.canvas.width * 0.8;
         const height = 30;
-        const x = (platformCanvas.width - width) / 2;
-        const y = (platformCanvas.height - height) / 2;
+        const x = (ctx.canvas.width - width) / 2;
+        const y = (ctx.canvas.height - height) / 2;
 
 
         ctx.fillStyle = platformColor;
         ctx.beginPath();
-        ctx.roundRect(x, y, width, height, 10);
+
+
+        if (ctx.roundRect) {
+            ctx.roundRect(x, y, width, height, 10);
+        } else {
+
+            const radius = 10;
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
         ctx.fill();
 
 
@@ -518,11 +548,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 ctx.fillStyle = platformColor;
                 ctx.beginPath();
-                ctx.roundRect(x + width * 0.1, y + height + 5, width * 0.15, 10, 5);
+                if (ctx.roundRect) {
+                    ctx.roundRect(x + width * 0.1, y + height + 5, width * 0.15, 10, 5);
+                } else {
+                    ctx.rect(x + width * 0.1, y + height + 5, width * 0.15, 10);
+                }
                 ctx.fill();
 
                 ctx.beginPath();
-                ctx.roundRect(x + width * 0.75, y + height + 8, width * 0.1, 8, 5);
+                if (ctx.roundRect) {
+                    ctx.roundRect(x + width * 0.75, y + height + 8, width * 0.1, 8, 5);
+                } else {
+                    ctx.rect(x + width * 0.75, y + height + 8, width * 0.1, 8);
+                }
                 ctx.fill();
                 break;
             case 'moving':
@@ -567,7 +605,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (document.querySelector('.tab.active').getAttribute('data-tab') === 'monster-creator') {
                 drawMonster(monsterCtx);
             }
-
         }, 150);
     }
 
@@ -582,7 +619,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updatePlatformPreviews() {
 
-        const container = document.querySelector('.platform-preview-grid');
+        const container = document.getElementById('platformPreviews');
+        if (!container) return;
+
         container.innerHTML = '';
 
 
@@ -637,253 +676,211 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function populateColorSchemes() {
-        const container = document.getElementById('colorOptions');
+        const container = document.getElementById('colorSchemes');
+        if (!container) return;
+
         container.innerHTML = '';
 
         colorSchemes.forEach((scheme, index) => {
-            const schemeContainer = document.createElement('div');
-            schemeContainer.style.margin = '10px';
-            schemeContainer.style.display = 'inline-block';
+            const schemeEl = document.createElement('div');
+            schemeEl.className = 'color-scheme';
 
-            const label = document.createElement('p');
-            label.textContent = scheme.name;
-            label.style.margin = '5px';
-            schemeContainer.appendChild(label);
+            const title = document.createElement('h4');
+            title.textContent = scheme.name;
+            title.style.margin = '5px 0';
+            schemeEl.appendChild(title);
 
-            const colorsDiv = document.createElement('div');
 
+            const swatchesContainer = document.createElement('div');
             scheme.colors.forEach(color => {
-                const colorBox = document.createElement('div');
-                colorBox.className = 'color-option';
-                colorBox.style.backgroundColor = color;
-                colorsDiv.appendChild(colorBox);
+                const swatch = document.createElement('span');
+                swatch.className = 'color-option';
+                swatch.style.backgroundColor = color;
+                swatchesContainer.appendChild(swatch);
             });
+            schemeEl.appendChild(swatchesContainer);
 
-            schemeContainer.appendChild(colorsDiv);
 
-
-            const button = document.createElement('button');
-            button.textContent = 'Use Scheme';
-            button.style.margin = '5px';
-            button.addEventListener('click', () => {
+            const selectBtn = document.createElement('button');
+            selectBtn.textContent = 'Use Scheme';
+            selectBtn.addEventListener('click', () => {
                 currentColorScheme = index;
-                drawMonster(monsterCtx);
-                updateMonsterPreviews();
 
 
-                drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
-                updatePlatformPreviews();
-
-
-                document.querySelectorAll('.color-scheme-button').forEach(btn => {
+                document.querySelectorAll('.color-scheme button').forEach(btn => {
                     btn.classList.remove('selected');
                 });
-                button.classList.add('selected');
+                selectBtn.classList.add('selected');
+
+
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+                populatePlatformColors();
+                drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
+                updatePlatformPreviews();
             });
 
             if (index === currentColorScheme) {
-                button.classList.add('selected');
-                button.classList.add('color-scheme-button');
+                selectBtn.classList.add('selected');
             }
 
-            schemeContainer.appendChild(button);
-            container.appendChild(schemeContainer);
+            schemeEl.appendChild(selectBtn);
+            container.appendChild(schemeEl);
         });
     }
 
 
-    function populatePlatformColorOptions() {
-        const container = document.getElementById('platformColorOptions');
+    function populatePlatformColors() {
+        const container = document.getElementById('platformColors');
+        if (!container) return;
+
         container.innerHTML = '';
 
-        colorSchemes[currentColorScheme].colors.forEach((color, index) => {
-            const colorBox = document.createElement('div');
-            colorBox.className = 'color-option';
-            colorBox.style.backgroundColor = color;
-
+        const colorScheme = colorSchemes[currentColorScheme].colors;
+        colorScheme.forEach((color, index) => {
+            const colorOption = document.createElement('div');
+            colorOption.className = 'color-option';
             if (index === currentPlatformColor) {
-                colorBox.classList.add('selected');
+                colorOption.classList.add('selected');
             }
+            colorOption.style.backgroundColor = color;
 
-            colorBox.addEventListener('click', () => {
+            colorOption.addEventListener('click', () => {
                 currentPlatformColor = index;
 
 
-                document.querySelectorAll('#platformColorOptions .color-option').forEach(el => {
+                document.querySelectorAll('#platformColors .color-option').forEach(el => {
                     el.classList.remove('selected');
                 });
-                colorBox.classList.add('selected');
+                colorOption.classList.add('selected');
 
                 drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
                 updatePlatformPreviews();
             });
 
-            container.appendChild(colorBox);
+            container.appendChild(colorOption);
         });
     }
 
 
-    function exportAssets() {
-
-        const zip = new JSZip();
-
-
-        const monsterDir = zip.folder("monster");
-        const platformsDir = zip.folder("platforms");
+    function downloadAssets() {
+        alert("Asset Pack Download\n\nThis would normally create a ZIP file with all your monster animations and platform types.\n\nIn a real implementation, we would generate separate PNGs for each animation frame and include a README.md with instructions for GDevelop.");
 
 
+        const link = document.createElement('a');
+        link.download = 'my-monster.png';
+        link.href = monsterCanvas.toDataURL();
+        link.click();
+    }
 
 
+    function init() {
 
-        const idleCanvas = document.createElement('canvas');
-        idleCanvas.width = 400;
-        idleCanvas.height = 400;
-        const idleCtx = idleCanvas.getContext('2d');
-        drawMonster(idleCtx, 'idle');
-
-        monsterDir.file("monster_idle.png", idleCanvas.toDataURL().split(',')[1], { base64: true });
+        generateMonsterParts();
 
 
-        for (let frame = 0; frame < runAnimationFrames; frame++) {
-            const runCanvas = document.createElement('canvas');
-            runCanvas.width = 400;
-            runCanvas.height = 400;
-            const runCtx = runCanvas.getContext('2d');
+        populateColorSchemes();
+        populatePlatformColors();
 
 
-            const oldFrame = animationFrame;
-            animationFrame = frame;
-
-            drawMonster(runCtx, 'run');
+        drawMonster(monsterCtx);
+        drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
 
 
-            animationFrame = oldFrame;
+        updateMonsterPreviews();
+        updatePlatformPreviews();
 
-            monsterDir.file(`monster_run_${frame}.png`, runCanvas.toDataURL().split(',')[1], { base64: true });
+
+        startAnimation();
+
+
+        const prevHeadBtn = document.getElementById('prevHead');
+        const nextHeadBtn = document.getElementById('nextHead');
+        const prevTorsoBtn = document.getElementById('prevTorso');
+        const nextTorsoBtn = document.getElementById('nextTorso');
+        const prevLegsBtn = document.getElementById('prevLegs');
+        const nextLegsBtn = document.getElementById('nextLegs');
+        const randomizeMonsterBtn = document.getElementById('randomizeMonster');
+        const randomizePlatformBtn = document.getElementById('randomizePlatform');
+        const downloadBtn = document.getElementById('downloadAssets');
+
+        if (prevHeadBtn) {
+            prevHeadBtn.addEventListener('click', function () {
+                currentHead = (currentHead - 1 + numHeads) % numHeads;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+            });
+        }
+
+        if (nextHeadBtn) {
+            nextHeadBtn.addEventListener('click', function () {
+                currentHead = (currentHead + 1) % numHeads;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+            });
+        }
+
+        if (prevTorsoBtn) {
+            prevTorsoBtn.addEventListener('click', function () {
+                currentTorso = (currentTorso - 1 + numTorsos) % numTorsos;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+            });
+        }
+
+        if (nextTorsoBtn) {
+            nextTorsoBtn.addEventListener('click', function () {
+                currentTorso = (currentTorso + 1) % numTorsos;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+            });
+        }
+
+        if (prevLegsBtn) {
+            prevLegsBtn.addEventListener('click', function () {
+                currentLegs = (currentLegs - 1 + numLegs) % numLegs;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+            });
+        }
+
+        if (nextLegsBtn) {
+            nextLegsBtn.addEventListener('click', function () {
+                currentLegs = (currentLegs + 1) % numLegs;
+                drawMonster(monsterCtx);
+                updateMonsterPreviews();
+            });
+        }
+
+        if (randomizeMonsterBtn) {
+            randomizeMonsterBtn.addEventListener('click', randomizeMonster);
+        }
+
+        if (randomizePlatformBtn) {
+            randomizePlatformBtn.addEventListener('click', randomizePlatform);
+        }
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', downloadAssets);
         }
 
 
-        const jumpCanvas = document.createElement('canvas');
-        jumpCanvas.width = 400;
-        jumpCanvas.height = 400;
-        const jumpCtx = jumpCanvas.getContext('2d');
-        drawMonster(jumpCtx, 'jump');
-
-        monsterDir.file("monster_jump.png", jumpCanvas.toDataURL().split(',')[1], { base64: true });
+        document.querySelectorAll('.platform-type').forEach(el => {
+            el.addEventListener('click', () => {
+                currentPlatform = el.getAttribute('data-type');
 
 
-        platformTypes.forEach(type => {
-            const platformCanvas = document.createElement('canvas');
-            platformCanvas.width = 600;
-            platformCanvas.height = 150;
-            const platformCtx = platformCanvas.getContext('2d');
-            drawPlatform(platformCtx, type, currentPlatformColor);
+                document.querySelectorAll('.platform-type').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                el.classList.add('selected');
 
-            platformsDir.file(`platform_${type}.png`, platformCanvas.toDataURL().split(',')[1], { base64: true });
-        });
-
-
-        const readme = `# Monster Mashup Asset Pack
-
-Created with the Monster Mashup Asset Generator for GDev Workshop
-
-## Contents:
-- Monster character with animations (idle, run, jump)
-- Platform types (normal, bouncy, crumbling, moving)
-
-## How to use in GDevelop:
-
-1. Import the monster animations:
-- monster_idle.png - Use for standing still
-- monster_run_0.png through monster_run_3.png - Create animation for running
-- monster_jump.png - Use for jumping animation
-
-2. Import platform graphics:
-- platform_normal.png - Standard platform
-- platform_bounce.png - Add behaviors: "Bounce" with strength 800
-- platform_crumble.png - Add behaviors: "Platform" with custom events to disappear
-- platform_moving.png - Add behaviors: "Path movement" between two points
-
-Enjoy making your game!
-`;
-
-
-        zip.file("README.md", readme);
-
-
-        zip.generateAsync({ type: "blob" })
-            .then(function (content) {
-                saveAs(content, "monster-mashup-assets.zip");
+                drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
+                updatePlatformPreviews();
             });
+        });
     }
 
 
-    generateMonsterParts();
-    populateColorSchemes();
-    populatePlatformColorOptions();
-    randomizeMonster();
-    randomizePlatform();
-    startAnimation();
-    updateMonsterPreviews();
-    updatePlatformPreviews();
-
-
-    document.getElementById('prevHead').addEventListener('click', function () {
-        currentHead = (currentHead - 1 + numHeads) % numHeads;
-        drawMonster(monsterCtx);
-        updateMonsterPreviews();
-    });
-
-    document.getElementById('nextHead').addEventListener('click', function () {
-        currentHead = (currentHead + 1) % numHeads;
-        drawMonster(monsterCtx);
-        updateMonsterPreviews();
-    });
-
-    document.getElementById('prevTorso').addEventListener('click', function () {
-        currentTorso = (currentTorso - 1 + numTorsos) % numTorsos;
-        drawMonster(monsterCtx);
-        updateMonsterPreviews();
-    });
-
-    document.getElementById('nextTorso').addEventListener('click', function () {
-        currentTorso = (currentTorso + 1) % numTorsos;
-        drawMonster(monsterCtx);
-        updateMonsterPreviews();
-    });
-
-    document.getElementById('prevLegs').addEventListener('click', function () {
-        currentLegs = (currentLegs - 1 + numLegs) % numLegs;
-        drawMonster(monsterCtx);
-        updateMonsterPreviews();
-    });
-
-    document.getElementById('nextLegs').addEventListener('click', function () {
-        currentLegs = (currentLegs + 1) % numLegs;
-        drawMonster(monsterCtx);
-        updateMonsterPreviews();
-    });
-
-
-    document.querySelectorAll('.platform-type').forEach(el => {
-        el.addEventListener('click', () => {
-            currentPlatform = el.getAttribute('data-type');
-
-
-            document.querySelectorAll('.platform-type').forEach(el => {
-                el.classList.remove('selected');
-            });
-            el.classList.add('selected');
-
-            drawPlatform(platformCtx, currentPlatform, currentPlatformColor);
-            updatePlatformPreviews();
-        });
-    });
-
-
-    document.getElementById('randomizeMonster').addEventListener('click', randomizeMonster);
-    document.getElementById('randomizePlatform').addEventListener('click', randomizePlatform);
-
-
-    document.getElementById('exportAssets').addEventListener('click', exportAssets);
+    init();
 });
