@@ -5,8 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monster Mashup - GDev Asset Creator</title>
-    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+        integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"
+        integrity="sha512-Qlv6VSKh1gDKGoJbnyA5RMXYcvnpIqhO++MhIM2fStMcGT9i2T//tSwYFlcyoRRDcDZ+TYHpH8azBBCyhpSeqw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
@@ -1160,48 +1164,109 @@
                 statusDiv.style.transform = 'translate(-50%, -50%)';
                 statusDiv.style.zIndex = '1000';
                 statusDiv.style.maxWidth = '80%';
-                statusDiv.innerHTML = '<h3>Downloading Assets</h3><p>Your monster and platform images are being prepared...</p>';
+                statusDiv.innerHTML = '<h3>Creating ZIP Archive</h3><p>Preparing your monster assets...</p>';
                 document.body.appendChild(statusDiv);
 
+                try {
+
+                    if (typeof JSZip === 'undefined') {
+                        throw new Error("JSZip library not loaded. Please refresh the page and try again.");
+                    }
+
+                    if (typeof saveAs === 'undefined') {
+                        throw new Error("FileSaver library not loaded. Please refresh the page and try again.");
+                    }
 
 
+                    const zip = new JSZip();
 
 
-                setTimeout(() => {
-                    statusDiv.innerHTML = '<h3>Downloading Assets (1/3)</h3><p>Downloading monster image...</p>';
+                    const monsterDir = zip.folder("monster");
+                    const platformsDir = zip.folder("platforms");
 
-                    const link = document.createElement('a');
-                    link.download = 'monster.png';
-                    link.href = monsterCanvas.toDataURL();
-                    link.click();
+                    statusDiv.innerHTML = '<h3>Creating ZIP Archive</h3><p>Adding monster animations...</p>';
 
 
-                    setTimeout(() => {
-                        statusDiv.innerHTML = '<h3>Downloading Assets (2/3)</h3><p>Downloading platform image...</p>';
+                    const idleCanvas = document.createElement('canvas');
+                    idleCanvas.width = 400;
+                    idleCanvas.height = 400;
+                    const idleCtx = idleCanvas.getContext('2d');
+                    drawMonster(idleCtx, 'idle');
+                    const idleDataUrl = idleCanvas.toDataURL('image/png');
+                    monsterDir.file("monster_idle.png", idleDataUrl.split(',')[1], { base64: true });
 
-                        const platformLink = document.createElement('a');
-                        platformLink.download = 'platform.png';
-                        platformLink.href = platformCanvas.toDataURL();
-                        platformLink.click();
+
+                    const savedAnimFrame = animationFrame;
 
 
-                        setTimeout(() => {
-                            statusDiv.innerHTML = '<h3>Downloading Assets (3/3)</h3><p>Downloading instructions...</p>';
+                    for (let i = 0; i < 4; i++) {
+                        animationFrame = i;
 
-                            const readme = `# Monster Mashup Assets for GDevelop
+                        const runCanvas = document.createElement('canvas');
+                        runCanvas.width = 400;
+                        runCanvas.height = 400;
+                        const runCtx = runCanvas.getContext('2d');
+                        drawMonster(runCtx, 'run');
+                        const runDataUrl = runCanvas.toDataURL('image/png');
+                        monsterDir.file(`monster_run_${i}.png`, runDataUrl.split(',')[1], { base64: true });
+                    }
 
-## How to use these assets in GDevelop:
 
-1. Import the monster image:
-- Use for character sprite
-- Create animations for idle, run, and jump
+                    animationFrame = savedAnimFrame;
 
-2. Import the platform image:
-- Use for platforms in your game
-- Add appropriate behaviors (physics, etc.)
+
+                    const jumpCanvas = document.createElement('canvas');
+                    jumpCanvas.width = 400;
+                    jumpCanvas.height = 400;
+                    const jumpCtx = jumpCanvas.getContext('2d');
+                    drawMonster(jumpCtx, 'jump');
+                    const jumpDataUrl = jumpCanvas.toDataURL('image/png');
+                    monsterDir.file("monster_jump.png", jumpDataUrl.split(',')[1], { base64: true });
+
+                    statusDiv.innerHTML = '<h3>Creating ZIP Archive</h3><p>Adding platforms...</p>';
+
+
+                    platformTypes.forEach(type => {
+
+                        const platformCanvas = document.createElement('canvas');
+                        platformCanvas.width = 600;
+                        platformCanvas.height = 150;
+                        const platformCtx = platformCanvas.getContext('2d');
+
+
+                        drawPlatform(platformCtx, type, currentPlatformColor);
+
+                        const platformDataUrl = platformCanvas.toDataURL('image/png');
+                        platformsDir.file(`platform_${type}.png`, platformDataUrl.split(',')[1], { base64: true });
+                    });
+
+                    statusDiv.innerHTML = '<h3>Creating ZIP Archive</h3><p>Adding documentation...</p>';
+
+
+                    const readme = `# Monster Mashup Asset Pack
+
+Created with the Monster Mashup Asset Generator for GDev Workshop
+
+## Contents:
+- Monster character with animations (idle, run, jump)
+- Platform types (normal, bouncy, crumbling, moving)
+
+## How to use in GDevelop:
+
+1. Import the monster animations:
+- monster_idle.png - Use for standing still
+- monster_run_0.png through monster_run_3.png - Create animation for running
+- monster_jump.png - Use for jumping animation
+
+2. Import platform graphics:
+- platform_normal.png - Standard platform
+- platform_bounce.png - Add behaviors: "Bounce" with strength 800
+- platform_crumble.png - Add behaviors: "Platform" with custom events to disappear
+- platform_moving.png - Add behaviors: "Path movement" between two points
 
 ## Basic GDevelop Events to Implement:
 
+\`\`\`
 # Character Movement
 CONDITIONS: Left arrow is pressed
 ACTIONS: 
@@ -1228,171 +1293,62 @@ ACTIONS:
 CONDITIONS: Monster collides with bouncy platform from above
 ACTIONS:
 - Add force Y: -800 to monster
+\`\`\`
 
 Enjoy making your game!`;
 
-                            const readmeBlob = new Blob([readme], { type: 'text/plain' });
-                            const readmeLink = document.createElement('a');
-                            readmeLink.download = 'README.txt';
-                            readmeLink.href = URL.createObjectURL(readmeBlob);
-                            readmeLink.click();
 
+                    zip.file("README.md", readme);
 
-                            setTimeout(() => {
-                                document.body.removeChild(statusDiv);
-                            }, 2000);
-                        }, 1000);
-                    }, 1000);
-                }, 500);
-
-
-                console.log("WORKSHOP INSTRUCTIONS: Tell participants to use the downloaded images in GDevelop. Monster image can be split into animation frames in GDevelop's sprite editor.");
-            }
-
-
-            function downloadAssetsAsZip() {
-
-                const debugInfo = document.createElement('div');
-                debugInfo.style.position = 'fixed';
-                debugInfo.style.top = '10px';
-                debugInfo.style.left = '10px';
-                debugInfo.style.backgroundColor = 'white';
-                debugInfo.style.padding = '10px';
-                debugInfo.style.border = '1px solid black';
-                debugInfo.style.zIndex = '1000';
-                debugInfo.innerHTML = 'Starting download process...';
-                document.body.appendChild(debugInfo);
-
-                try {
-
-                    debugInfo.innerHTML += '<br>Checking JSZip...';
-                    if (typeof JSZip === 'undefined') {
-                        debugInfo.innerHTML += '<br>ERROR: JSZip not found!';
-                        throw new Error("JSZip library not loaded");
-                    }
-
-                    debugInfo.innerHTML += '<br>JSZip found, creating zip...';
-
-
-                    const zip = new JSZip();
-
-
-                    const monsterDir = zip.folder("monster");
-                    const platformsDir = zip.folder("platforms");
-
-                    debugInfo.innerHTML += '<br>Adding monster animations...';
-
-
-
-                    const idleCanvas = document.createElement('canvas');
-                    idleCanvas.width = 400;
-                    idleCanvas.height = 400;
-                    const idleCtx = idleCanvas.getContext('2d');
-                    drawMonster(idleCtx, 'idle');
-
-
-                    monsterDir.file("monster_idle.png",
-                        idleCanvas.toDataURL().split(',')[1],
-                        { base64: true }
-                    );
-
-                    debugInfo.innerHTML += '<br>Added idle animation';
-
-
-                    const runCanvas = document.createElement('canvas');
-                    runCanvas.width = 400;
-                    runCanvas.height = 400;
-                    const runCtx = runCanvas.getContext('2d');
-                    drawMonster(runCtx, 'run');
-
-
-                    monsterDir.file("monster_run.png",
-                        runCanvas.toDataURL().split(',')[1],
-                        { base64: true }
-                    );
-
-                    debugInfo.innerHTML += '<br>Added run animation';
-
-
-                    const jumpCanvas = document.createElement('canvas');
-                    jumpCanvas.width = 400;
-                    jumpCanvas.height = 400;
-                    const jumpCtx = jumpCanvas.getContext('2d');
-                    drawMonster(jumpCtx, 'jump');
-
-
-                    monsterDir.file("monster_jump.png",
-                        jumpCanvas.toDataURL().split(',')[1],
-                        { base64: true }
-                    );
-
-                    debugInfo.innerHTML += '<br>Added jump animation';
-
-
-                    const platformCanvas = document.createElement('canvas');
-                    platformCanvas.width = 600;
-                    platformCanvas.height = 150;
-                    const platformCtx = platformCanvas.getContext('2d');
-                    drawPlatform(platformCtx, 'normal', currentPlatformColor);
-
-
-                    platformsDir.file("platform.png",
-                        platformCanvas.toDataURL().split(',')[1],
-                        { base64: true }
-                    );
-
-                    debugInfo.innerHTML += '<br>Added platform';
-
-
-                    const readme = "Monster Mashup Asset Pack\n\nContains monster animations and platform graphics for your GDevelop game!";
-
-
-                    zip.file("README.txt", readme);
-
-                    debugInfo.innerHTML += '<br>Added README, generating ZIP...';
+                    statusDiv.innerHTML = '<h3>Creating ZIP Archive</h3><p>Generating download file...</p>';
 
 
                     zip.generateAsync({ type: "blob" })
                         .then(function (content) {
-                            debugInfo.innerHTML += '<br>ZIP generated!';
+
+                            statusDiv.innerHTML = '<h3>Download Ready!</h3><p>Your monster asset pack is downloading...</p>';
 
 
-                            if (typeof saveAs !== 'undefined') {
-                                debugInfo.innerHTML += '<br>Using saveAs to download...';
-                                saveAs(content, "monster-mashup-assets.zip");
-                                debugInfo.innerHTML += '<br>Download initiated!';
-                            } else {
-                                debugInfo.innerHTML += '<br>ERROR: saveAs not found!';
-
-                                const link = document.createElement('a');
-                                link.download = 'my-monster.png';
-                                link.href = monsterCanvas.toDataURL();
-                                link.click();
-                            }
+                            saveAs(content, "monster-mashup-assets.zip");
 
 
-                            setTimeout(() => {
-                                document.body.removeChild(debugInfo);
-                            }, 5000);
+                            setTimeout(function () {
+                                document.body.removeChild(statusDiv);
+                            }, 3000);
                         })
                         .catch(function (error) {
-                            debugInfo.innerHTML += '<br>ERROR generating ZIP: ' + error.message;
-                            throw error;
+
+                            console.error("Error generating zip:", error);
+                            statusDiv.innerHTML = `<h3>Error</h3><p>There was a problem creating the ZIP file: ${error.message}</p><p>Downloading individual files instead...</p>`;
+
+
+                            setTimeout(function () {
+                                const link = document.createElement('a');
+                                link.download = 'monster.png';
+                                link.href = idleCanvas.toDataURL();
+                                link.click();
+
+                                setTimeout(function () {
+                                    document.body.removeChild(statusDiv);
+                                }, 2000);
+                            }, 2000);
                         });
                 } catch (error) {
-                    debugInfo.innerHTML += '<br>EXCEPTION: ' + error.message;
-                    console.error("Error generating zip: ", error);
+
+                    console.error("Error preparing download:", error);
+                    statusDiv.innerHTML = `<h3>Error</h3><p>${error.message}</p><p>Downloading just the monster image instead...</p>`;
 
 
-                    const link = document.createElement('a');
-                    link.download = 'my-monster.png';
-                    link.href = monsterCanvas.toDataURL();
-                    link.click();
+                    setTimeout(function () {
+                        const link = document.createElement('a');
+                        link.download = 'monster.png';
+                        link.href = monsterCanvas.toDataURL();
+                        link.click();
 
-
-                    setTimeout(() => {
-                        document.body.removeChild(debugInfo);
-                    }, 10000);
+                        setTimeout(function () {
+                            document.body.removeChild(statusDiv);
+                        }, 2000);
+                    }, 2000);
                 }
             }
 
