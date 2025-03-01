@@ -463,6 +463,43 @@
             const runAnimationFrames = 4;
             let animationTimer;
 
+            function trimCanvas(canvas) {
+                const context = canvas.getContext('2d');
+                const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+                const data = pixels.data;
+
+                let minX = canvas.width, minY = canvas.height;
+                let maxX = 0, maxY = 0;
+
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const alpha = data[((y * canvas.width + x) * 4) + 3];
+                        if (alpha > 0) {
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
+                        }
+                    }
+                }
+                const trimmedCanvas = document.createElement('canvas');
+                const width = maxX - minX + 5;
+                const height = maxY - minY + 5;
+                trimmedCanvas.width = width;
+                trimmedCanvas.height = height;
+
+                const trimmedContext = trimmedCanvas.getContext('2d');
+                trimmedContext.drawImage(
+                    canvas,
+                    minX - 2, minY - 2,
+                    maxX - minX + 4, maxY - minY + 4,
+                    0, 0,
+                    width, height
+                );
+
+                return trimmedCanvas;
+            }
+
 
             function generateMonsterParts() {
 
@@ -1193,52 +1230,37 @@
                     idleCanvas.height = 400;
                     const idleCtx = idleCanvas.getContext('2d');
                     drawMonster(idleCtx, 'idle');
-                    const idleDataUrl = idleCanvas.toDataURL('image/png');
+                    const trimmedIdleCanvas = trimCanvas(idleCanvas);
+                    const idleDataUrl = trimmedIdleCanvas.toDataURL('image/png');
                     monsterDir.file("monster_idle.png", idleDataUrl.split(',')[1], { base64: true });
 
-
-                    const savedAnimFrame = animationFrame;
-
-
-                    for (let i = 0; i < 4; i++) {
-                        animationFrame = i;
-
-                        const runCanvas = document.createElement('canvas');
-                        runCanvas.width = 400;
-                        runCanvas.height = 400;
-                        const runCtx = runCanvas.getContext('2d');
-                        drawMonster(runCtx, 'run');
-                        const runDataUrl = runCanvas.toDataURL('image/png');
-                        monsterDir.file(`monster_run_${i}.png`, runDataUrl.split(',')[1], { base64: true });
-                    }
-
-
-                    animationFrame = savedAnimFrame;
-
+                    const runCanvas = document.createElement('canvas');
+                    runCanvas.width = 400;
+                    runCanvas.height = 400;
+                    const runCtx = runCanvas.getContext('2d');
+                    drawMonster(runCtx, 'run');
+                    const trimmedRunCanvas = trimCanvas(runCanvas);
+                    const runDataUrl = trimmedRunCanvas.toDataURL('image/png');
+                    monsterDir.file(`monster_run_${i}.png`, runDataUrl.split(',')[1], { base64: true });
 
                     const jumpCanvas = document.createElement('canvas');
                     jumpCanvas.width = 400;
                     jumpCanvas.height = 400;
                     const jumpCtx = jumpCanvas.getContext('2d');
                     drawMonster(jumpCtx, 'jump');
-                    const jumpDataUrl = jumpCanvas.toDataURL('image/png');
+                    const trimmedJumpCanvas = trimCanvas(jumpCanvas);
+                    const jumpDataUrl = trimmedJumpCanvas.toDataURL('image/png');
                     monsterDir.file("monster_jump.png", jumpDataUrl.split(',')[1], { base64: true });
 
-                    statusDiv.innerHTML = '<h3>Creating ZIP Archive</h3><p>Adding platforms...</p>';
-
-
                     platformTypes.forEach(type => {
-
                         const platformCanvas = document.createElement('canvas');
-
                         platformCanvas.width = 600;
                         platformCanvas.height = 60;
                         const platformCtx = platformCanvas.getContext('2d');
-
-
                         drawPlatform(platformCtx, type, currentPlatformColor);
 
-                        const platformDataUrl = platformCanvas.toDataURL('image/png');
+                        const trimmedPlatformCanvas = trimCanvas(platformCanvas);
+                        const platformDataUrl = trimmedPlatformCanvas.toDataURL('image/png');
                         platformsDir.file(`platform_${type}.png`, platformDataUrl.split(',')[1], { base64: true });
                     });
 
